@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <watermark onclick="downloadData()">CORAE</watermark>
+    <!--ID Prompt Screen-->
+    <div class="container">
+      <div class="form-container">
+        <input
+          type="text"
+          id="idInput"
+          placeholder="Enter your ID number (e.g. 102)"
+          oninput="handleInputChange()"
+          onkeydown="handleKeyDown(event)"
+        />
+        <button id="submitButton" onclick="showContent()">Submit</button>
+      </div>
+    </div>
+
+    <!--Platform Screen-->
+    <div class="platform-container hide">
+      <div class="main-content">
+        <div id="main">
+          <div id="instructions-container">
+            <!--Keybinding Display-->
+            <div id="instructions-keybinds">
+              <ul>
+                <h2>Controls</h2>
+                <li><strong>Play/Pause Video:</strong> Spacebar</li>
+                <li><strong>Adjust Slider:</strong> Left & Right Arrow Keys</li>
+              </ul>
+            </div>
+            <!--Term Definitions-->
+            <div id="instructions-defs">
+              <ul>
+                <h2>Definitions</h2>
+                <li id="pos-def"><strong id="pos-term">: </strong></li>
+                <li id="neg-def"><strong id="neg-term">: </strong></li>
+              </ul>
+            </div>
+          </div>
+
+          <!---Video Player-->
+          <video id="video">
+            <watermark onclick="downloadData()">CORAE</watermark>
+            <source src="$SRC" type="video/mp4" tabindex="-1" />
+            Your browser doesn't support the HTML5 video tag.
+          </video>
+
+          <!--Progress Bar-->
+          <div id="progress-bar">
+            <div id="progress"></div>
+          </div>
+
+          <!--Controls-->
+          <div id="control-container">
+            <!--Slider-->
+            <input
+              id="slider"
+              disabled="true"
+              type="range"
+              min="-7"
+              max="7"
+              step="1"
+              value="0"
+              onchange="logTime()"
+            />
+
+            <!--Term Labels-->
+            <div id="label-container">
+              <div id="label-left">
+                <ul>
+                  <h3 id="neg-term"></h3>
+                </ul>
+              </div>
+              <div id="label-center">
+                <ul>
+                  <h3 id="neutral-term"></h3>
+                </ul>
+              </div>
+              <div id="label-right">
+                <ul>
+                  <h3 id="pos-term"></h3>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script type="text/javascript" src="app.js"></script>
+  </body>
+</html>
