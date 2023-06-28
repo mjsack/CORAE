@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-[comment]: <> (missing: image/gif of platform, reference that should be used - still getting it - and also add instructions in more detailed/intuitive for use way (how to customize, etc. Consider wiki. none of this is urgent and should be last priority, only after camera ready version.)
+[//]: # "missing: image/gif of platform, reference that should be used - still getting it - and also add instructions in more detailed/intuitive for use way (how to customize, etc. Consider wiki. none of this is urgent and should be last priority, only after camera ready version."
 
 ## Description
 
