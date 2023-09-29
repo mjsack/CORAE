@@ -1,0 +1,64 @@
+{% extends 'layouts/base.html' %} {% block head %}
+<link
+  href="{{ url_for('static', filename='css/annotator.css') }}"
+  rel="stylesheet"
+/>
+<meta name="csrf-token" content="{{ csrf_token() }}" />
+{% endblock %} {% block navbar %}{% endblock %} {% block content %}
+<div
+  class="container-fluid d-flex flex-column align-items-center justify-content-center"
+>
+  <div class="media-container mb-3">
+    <div class="video-responsive position-relative">
+      <video width="100%" id="videoElement" class="d-block m-0 p-0">
+        <source src="{{ videos_data[0].url }}" type="{{ video_type }}" />
+        Your browser does not support the video tag.
+      </video>
+      <div
+        class="video-progress-bar position-absolute bottom-0 start-0"
+        id="videoProgressBar"
+      ></div>
+    </div>
+
+    <div class="slider-container position-relative mt-3">
+      <input
+        type="range"
+        class="form-range mt-xs-0 mt-md-3 p-0"
+        id="annotationSlider"
+        min="{{ slider_min }}"
+        max="{{ slider_max }}"
+        step="1"
+        value="{{ slider_value }}"
+        oninput="recordAnnotation()"
+      />
+
+      <div
+        class="labels-container position-absolute w-100 d-flex justify-content-between mt-1"
+        style="top: 100%; left: 0"
+      >
+        <span>{{ floor }}</span>
+        <span style="position: absolute; left: 50%; transform: translateX(-50%)"
+          >{{ axis }}</span
+        >
+        <span>{{ ceiling }}</span>
+      </div>
+    </div>
+
+    <input type="hidden" id="annotations" name="annotations" value="" />
+  </div>
+</div>
+{% endblock %}{% block js %}
+<script id="videosData" type="application/json">
+  {{ videos_data|tojson }}
+</script>
+{% for video in videos_data %}
+<script id="videoFrameRate_{{ video.id }}" type="application/json">
+  {{ video.frame_rate|tojson }}
+</script>
+{% endfor %}
+
+<script id="participantToken" type="application/json">
+  {{ participant.token|tojson }}
+</script>
+<script src="{{ url_for('static', filename='js/annotator.js') }}"></script>
+{% endblock %}

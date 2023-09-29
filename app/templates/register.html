@@ -1,0 +1,20 @@
+{% extends "layouts/base.html" %}{% block content %}
+<form method="post" class="d-grid gap-3">
+  {{ form.hidden_tag() }}
+  <div class="form-floating">
+    {{ form.username(class="form-control", placeholder="",size=32) }} {{
+    form.username.label }}
+  </div>
+  <div class="form-floating d-inline-flex">
+    {{ form.password(class="form-control", placeholder="", size=32) }} {{
+    form.password.label }}
+  </div>
+  <div class="form-floating d-inline-flex">
+    {{ form.password2(class="form-control", placeholder="",size=32) }} {{
+    form.password2.label }}
+  </div>
+  <div id="submit-container">
+    {{ form.submit(class="btn btn-primary", id="submit-button") }}
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,62 @@
+<nav class="navbar navbar-dark bg-dark navbar-expand-lg">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#">
+      <img
+        src="{{ url_for('static', filename='images/favicon.ico')}}"
+        alt=""
+        width="30"
+        height="30"
+      />
+      <code>CORAE</code>
+    </a>
+    <!-- Button to toggle the menu on small screens -->
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#navbarNav"
+      aria-controls="navbarNav"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-0">
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('core.documentation') }}"
+            >Documentation</a
+          >
+        </li>
+      </ul>
+      {% if current_user.is_authenticated %}
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('dashboard.dash') }}"
+            >Dashboard</a
+          >
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('dashboard.analytics') }}"
+            >Analytics</a
+          >
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('auth.logout') }}">Logout</a>
+        </li>
+      </ul>
+      {% else %}
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('auth.login') }}">Login</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('auth.register') }}">Register</a>
+        </li>
+      </ul>
+      {% endif %}
+    </div>
+    <!-- End of collapsing content -->
+  </div>
+</nav>

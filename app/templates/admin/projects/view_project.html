@@ -1,0 +1,115 @@
+{% extends "layouts/admin.html" %} {% block title %} Sessions {% endblock %} {%
+block content %}
+
+<div class="d-flex justify-content-between align-items-center my-3 header-dark">
+  <h2 class="mx-3">Sessions</h2>
+  <a
+    href="{{ url_for('sessions.new_session', project_id=project.id) }}"
+    class="btn btn-primary square-btn m-3"
+  >
+    <i class="bi bi-plus-lg"></i>
+  </a>
+</div>
+
+{% if sessions %}
+<div class="row mx-3">
+  {% for session in sessions if session.status == 'active' %}
+  <div class="col-12 col-md-4">
+    <div class="card mb-4">
+      <div
+        class="{{ 'bg-success' if session.status == 'active' else 'bg-warning' }}"
+        alt=""
+        style="height: 50px"
+      ></div>
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <h2 class="card-title d-inline-block">Session {{ session.id }}</h2>
+          <div class="d-flex">
+            <a
+              href="{{ url_for('sessions.view_session', project_id=project.id, session_id=session.id) }}"
+              class="btn btn-primary square-btn mx-3"
+            >
+              <i class="bi bi-binoculars"></i>
+            </a>
+            <form
+              method="post"
+              action="{{ url_for('sessions.toggle_session_status', project_id=project.id, session_id=session.id) }}"
+              class="d-inline"
+            >
+              {{ archive_form.csrf_token }}
+              <button type="submit" class="btn btn-warning square-btn">
+                <i class="bi bi-archive"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+        <h3 class="text-muted">Participants</h3>
+        <div class="d-flex flex-column mt-4 gap-3">
+          <div class="d-flex justify-content-between align-items-left">
+            <h5>ID&emsp;Token</h5>
+            <h5>External ID</h5>
+          </div>
+          {% for participant in session.participants %}
+          <div class="d-flex justify-content-between align-items-left">
+            <h5 class="text-muted">
+              {{ participant.id}}&emsp;{{ participant.token }}
+            </h5>
+            <h5 class="text-muted">{{ participant.name }}</h5>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="d-flex justify-content-between align-items-center my-3 header-dark">
+  <h2 class="mx-3">Archive</h2>
+</div>
+
+<div class="row mx-3">
+  {% for session in sessions if session.status == 'archived' %}
+  <div class="col-12 col-md-4">
+    <div class="card mb-4">
+      <div
+        class="{{ 'bg-success' if session.status == 'active' else 'bg-warning' }}"
+        alt=""
+        style="height: 50px"
+      ></div>
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 class="card-title d-inline-block">Session {{ session.id }}</h2>
+          <div class="d-flex">
+            <a
+              href="{{ url_for('sessions.view_session', project_id=project.id, session_id=session.id) }}"
+              class="btn btn-primary square-btn mx-3"
+            >
+              <i class="bi bi-binoculars"></i>
+            </a>
+            <form
+              method="post"
+              action="{{ url_for('sessions.toggle_session_status', project_id=project.id, session_id=session.id) }}"
+              class="d-inline"
+            >
+              {{ archive_form.csrf_token }}
+              <button type="submit" class="btn btn-warning square-btn">
+                <i class="bi bi-archive"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <h5>Created</h5>
+        <p class="text-muted">{{ session.created_at }}</p>
+
+        <h5>Updated</h5>
+        <p class="text-muted">{{ session.updated_at }}</p>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<p class="mx-3">No sessions available for this project.</p>
+{% endif %} {% endblock %}

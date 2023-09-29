@@ -1,0 +1,13 @@
+{% extends "layouts/admin.html" %} {% block title %} Admin Panel {% endblock %}
+{% block content %}
+  <div class="row">
+    <div class="col-md-6">
+      {% include "partials/dashboard/projects_list.html" %}
+    </div>
+    <div class="col-md-6">
+      {% include "partials/dashboard/presets_list.html" %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}

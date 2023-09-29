@@ -1,0 +1,54 @@
+{% extends "layouts/admin.html" %} {% block content %}
+
+<div class="row">
+  <div class="col-12">
+    <div
+      class="d-flex justify-content-between align-items-center my-3 mb-4 header-dark"
+    >
+      <h2 class="mx-3">Participants</h2>
+    </div>
+
+    <form
+      action=""
+      method="post"
+      enctype="multipart/form-data"
+      class="d-grid gap-3"
+    >
+      {% for participant_name in form.participants %}
+      <div class="form-group mb-3">
+        <div class="form-floating mb-3 mx-3">
+          {{ participant_name(class="form-control",
+          required=participant_name.flags.required) }}
+          <label for="{{ participant_name.id }}"
+            >Participant {{ loop.index }}</label
+          >
+        </div>
+
+        <!-- Video Upload -->
+        {% if coupling == 'coupled' %}
+        <div class="form-group mb-2 mx-3">
+          <input
+            type="file"
+            class="form-control"
+            id="videos-{{ loop.index0 }}"
+            name="videos-{{ loop.index0 }}"
+          />
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %} {% if coupling == 'decoupled' %}
+      <div class="form-group mb-2">
+        <h2 class="mx-3">Session Videos</h2>
+        <div class="input-group mx-3">
+          {{ form.general_videos(class="form-control") }}
+        </div>
+      </div>
+      {% endif %} {{ form.csrf_token }}
+      <div class="d-grid col-xs-12 col-md-2 mx-3 mb-3">
+        <button type="submit" class="btn btn-primary">Create Session</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,12 @@
+venv/
+migrations/
+ignore/
+.vscode/
+.idea/
+*.db
+*.pyc
+*.log
+.DS_Store
+launch.bat
+
+

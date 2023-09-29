@@ -1,0 +1,58 @@
+{% extends "layouts/admin.html" %} {% block title %}View Session {{ session.id
+}}{% endblock %} {% block content %}
+<!-- Session Header -->
+<div class="d-flex justify-content-between align-items-center my-3 header-dark">
+  <h2 class="mx-3">Session {{ session.id }}</h2>
+  <a
+    href="{{ url_for('sessions.view_session', session_id=session.id, project_id=project_id) }}"
+    class="btn btn-primary square-btn mx-3"
+  >
+    <i class="bi bi-download"></i>
+  </a>
+</div>
+
+<!-- Session Info -->
+<div class="card mx-3 mb-4">
+  <div class="card-body">
+    <h3 class="card-title">Session Details</h3>
+    <p><strong>Status:</strong> {{ session.status }}</p>
+    <p><strong>Created at:</strong> {{ session.created_at }}</p>
+    <p><strong>Updated at:</strong> {{ session.updated_at }}</p>
+  </div>
+</div>
+
+<!-- Participants -->
+<div class="row mx-1">
+  {% for participant in session.participants %}
+  <div class="col-12 col-md-4">
+    <div class="card mb-4">
+      <div
+        class="{{ 'bg-success' if participant.has_submitted else ('bg-warning' if participant.has_accessed else 'bg-danger') }}"
+        style="height: 50px"
+      ></div>
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <h3 class="card-title mb-0">{{ participant.name }}</h3>
+          <div class="d-flex">
+            <a
+              href="{{ url_for('sessions.download_participant_data', session_id=session.id, token=participant.token) }}"
+              class="btn btn-secondary square-btn me-3"
+            >
+              <i class="bi bi-filetype-json"></i>
+            </a>
+            <a
+              href="{{ url_for('participant.join_session', session_id=session.id, participant_id=participant.id, token=participant.token) }}"
+              class="btn btn-primary square-btn"
+            >
+              <i class="bi bi-share-fill"></i>
+            </a>
+          </div>
+        </div>
+        <p><strong>Token:</strong> {{ participant.token }}</p>
+        <p><strong>ID:</strong> {{ participant.id }}</p>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

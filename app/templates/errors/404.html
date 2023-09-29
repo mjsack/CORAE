@@ -1,0 +1,13 @@
+{% extends "layouts/base.html" %}{% block content %}
+<div class="jumbotron">
+  <h1 class="display-4">404</h1>
+  <p class="lead">Whoops. It looks like something went wrong.</p>
+  <hr class="my-4" />
+  <p>Contact your researcher to let them know what happened.</p>
+  <p class="lead">
+    <a class="btn btn-primary" href="{{ url_for('core.index') }}" role="button"
+      >Back</a
+    >
+  </p>
+</div>
+{% endblock %}

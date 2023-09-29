@@ -1,61 +1,202 @@
-# **CORAE** - **Co**ntinuous **R**etrospective **A**ffect **E**valuation
+# **CORAE** - **Co**ntinuous **R**etrospective **A**ffect **E**valuator
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-[//]: # "missing: image/gif of platform, reference that should be used - still getting it - and also add instructions in more detailed/intuitive for use way (how to customize, etc. Consider wiki. none of this is urgent and should be last priority, only after camera ready version."
+<img src="app/static/images/header.gif" alt="drawing" style="width:100%;"/>
 
 ## Description
 
-This is the repository that contains source code for CORAE.
+[CORAE](https://www.corae.org/) is a web-based tool to support the collection of continuous affect data.
 
 ## Table of Contents
 
+- [Prerequisites](prerequisites)
 - [Installation](#installation)
+  - [Windows](#automatic-installation-on-windows)
+  - [Linux](#automatic-installation-on-linux)
 - [Usage](#usage)
+  - [Dashboard](dashboard)
+    - [Windows](launching-on-windows)
+    - [Linux](launching-on-linux)
+  - [Annotator](#)
 - [Configuration](#configuration)
-- [Contributing](#contributing)
+  - [Annotation Settings](#annotation-settings)
+- [Views](#views)
 - [License](#license)
+- [Credits](#credits)
+
+## Prerequisites
+
+### [git](https://git-scm.com/download/)
+
+### [Python3](https://www.python.org/downloads)
+
+### [FFmpeg](https://ffmpeg.org/download.html)
 
 ## Installation
 
-### Install from source:
+### Automatic Installation on Windows
 
-#### 1. Clone the CORAE repository to your local machine
+> **Note**
+> When installing Python, ensure to add it to your system's environment variables.
+> There is a setting within the Python installer to perform this task automatically.
+
+1. Install [git](https://git-scm.com/download/win).
+
+2. Install [Python3](https://www.python.org/downloads).
+
+3. Install [FFmpeg](https://ffmpeg.org/download.html)
+
+4. Navigate to the directory that you would like `CORAE` to be downloaded.
+
+5. Download the `CORAE` web repository.
 
 ```bash
 $ git clone https://www.github.com/mjsack/CORAE.git
 ```
 
-#### 2. Run <code>build.sh</code> to install any outstanding dependencies
+5. Run `install_windows.bat` via Windows Explorer, or using the following command:
 
 ```bash
-$ bash build.sh
+$ .\install_windows.bat
+```
+
+### Automatic Installation on Linux
+
+1. Install `Python3`.
+
+```bash
+$ sudo apt install wget git python3 python3-venv
+```
+
+2. Install `FFmpeg`.
+
+```bash
+$ sudo apt install ffmpeg
+```
+
+2. Navigate to the directory that you would like `CORAE` to be downloaded.
+
+3. Download the `CORAE` web repository.
+
+```bash
+$ git clone https://www.github.com/mjsack/CORAE.git
+```
+
+4. Run `install_linux.sh`.
+
+```bash
+$ bash install_linux.sh
 ```
 
 ## Usage
 
-### Preparing to deploy:
+### Launching the Dashboard
 
-#### 1. Modify <code>config.ini</code> according to the needs of your project
+#### On Windows
+
+1. Navigate to your install directory.
+
+2. Run `launch.bat` via Windows Explorer, or using the following command:
 
 ```bash
-$ cd documents
-$ nano config.ini
+$ .\launch.bat
 ```
 
-### Deploying your instance:
+3. Access the app on your local machine by visiting http://localhost:5000 in your web browser.
 
-#### 1. Run <code>deploy.sh</code> to generate user dashboards and initialize your secure tunnel
+#### On Linux
 
-#### 2. Distribute the uniquely generated dashboard URLs to your participants
+1. Navigate to your install directory.
 
-##### - By default these are generated in the <code>/live/</code> directory
+2. Run `launch.sh` using the following command:
+
+```bash
+$ bash launch.sh
+```
+
+3. Access the app on your local machine by visiting http://localhost:5000 in your web browser.
 
 ## Configuration
 
-<p>We developed <code>CORAE</code> with the goal of creating an accessible tool for researchers to gather continuous affect data. To this end, we have attempted to make the process of project configuration as intuitive as possible.</p>
+We developed `CORAE` to be an accessible, intuitive, and highly customizable tool for capturing continuous affect data from participants through media annotation.
 
-<p>Prior to running <code>deploy.sh</code> you may change parameters within <code>config.ini</code> to alter frontend and backend components of the annotation dashboard.</p>
+### Host
+
+Depending on the needs of your project, there are many solutions for making your deployment publicly accessible. For smaller-scale adhoc sessions, tunneling services such as `ngrok` may suffice.
+
+Crucially, unless manually changed, CORAE is served on port `5000`.
+
+### Annotator Settings
+
+Below are the descriptions for settings available for configuration in `CORAE`. Some of the settings below are displayed conditionally, such that their value is assigned to a default state unless specific conditions are met.
+
+#### Annotation Method
+
+Determines how participants input their annotations.
+
+- `CORAE`: This is the standard method for annotation that enables annotation along a single linear dimension.
+
+#### Session Capacity
+
+Determines how many participants each session will accomodate.
+
+#### Video Coupling
+
+Determines how videos are associated with participants.
+
+- `Coupled` assigns each participant as the 'owner' of a specific video during session creation. Participants will annotate each other video in the session except for that which they are 'owner' of.
+- `Decoupled` associates each participant with each video without establishing any 'owner' relationships. Each participant will annotate each video in the session without exception.
+
+#### Video Ordering
+
+Determines the order in which participants will be presented videos for annotation during their session.
+
+- `Random` presents each participant videos for annotation in a pseudo-random order.
+- `Ordered` presents each participant videos for annotation in a predetermined order.
+
+#### Bounding
+
+Determines whether or not ratings with the annotation slider are numerically bound.
+
+- `Bounded` restricts the annotation slider to a predetermined range of values the cannot be exceeded.
+- `Unbounded` restricts input for the annotation slider to either 'positive' or 'negative' adjustments, but is numerically unrestricted.
+
+#### Granularity
+
+Determines the number of values on the annotation scale, excluding the neutral point of zero. This setting can be assigned any even-numbered integer value. This setting is only modifyable if `Bounding` is set to `Bounded`.
+
+#### Primary Axis
+
+Determines the label for the scale axis indicating to participants the affective dimension they should evaluate during their session. This setting can be assigned any string of characters. Particularly lengthy axis labels may wrap to the next line to avoid overlap with the `Ceiling` and `Floor` labels.
+
+#### Ceiling
+
+Determines the label for the right-most, or positive, value of the scale axis. This setting can be assigned any string of characters. Particularly lengthy `Ceiling` labels may wrap to the next line to avoid overlap with the `Primary Axis` label.
+
+#### Floor
+
+Determines the label for the left-most, or negative, value of the scale axis. This setting can be assigned any string of characters. Particularly lengthy `Floor` labels may wrap to the next line to avoid overlap with the `Primary Axis` label.
+
+## Views
+
+### Admin Dashboard
+
+The `Admin Dashboard` acts as the landing page for research management. From this page, you may create new `Projects` and `Presets`, view details for and delete each of them as desired. To prevent accidental deletions, there is a protection in place that requires two successive clicks on the delete button.
+
+<img src="app/static/images/dashboard_w.png" alt="drawing" style="width:100%;"/>
+
+### View Project
+
+The `View Project` page displays details pertaining to all sessions in a project, namely, project status, and a list of participants associated with each session.
+
+<img src="app/static/images/view_project_w.png" alt="drawing" style="width:100%;"/>
+
+### View Session
+
+The `View Session` page allows for the review of details pertaining to a specific project session, including the progress of each participant across the session. The colored bar above each participant card is indicitive of their status. `Red` indicates that they have yet to join their session, `Yellow` indicates that they have joined their session and are currently performing annotations, and `Green` indicates that they have submitted their annotations.
+
+<img src="app/static/images/view_session.png" alt="drawing" style="width:100%"/>
 
 ## License
 

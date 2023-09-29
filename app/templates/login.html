@@ -1,0 +1,25 @@
+{% extends "layouts/base.html" %}{% block content %} {% if
+current_user.is_authenticated %}
+
+<p>Proceed to the Dashboard</p>
+
+{% else %}
+<form method="post" class="d-grid gap-3">
+  {{ form.hidden_tag() }}
+  <div class="form-floating">
+    {{ form.username(class="form-control", placeholder="", size=32) }} {{
+    form.username.label }}
+  </div>
+  <div class="form-floating">
+    {{ form.password(class="form-control", placeholder="", size=32) }} {{
+    form.password.label }}
+  </div>
+  <div id="submit-container">
+    {{ form.submit(class="btn btn-primary", id="submit-button") }}
+  </div>
+</form>
+<p>
+  New to the platform?
+  <a href="{{ url_for('auth.register') }}">Register here</a>
+</p>
+{% endif %} {% endblock %}

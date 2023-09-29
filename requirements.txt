@@ -1,0 +1,10 @@
+flask
+flask-sqlalchemy
+flask_wtf
+flask-Login
+flask-bcrypt
+flask-migrate
+itsdangerous
+pandas
+matplotlib
+ffmpeg-python

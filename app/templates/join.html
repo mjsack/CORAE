@@ -1,0 +1,29 @@
+{% extends "layouts/base.html" %} {% block content %}
+<div class="form-outline mb-4">
+  <h1 class="my-3">Welcome to CORAE</h1>
+  <p class="lead">
+    Enter the unique project identifier given by the researcher:
+  </p>
+  <form
+    method="POST"
+    action="{{ url_for('participant.annotate', project_id=form.project_id.data, participant_id=form.participant_id.data, researcher_id=current_user.id) }}"
+  >
+    {{ form.csrf_token }}
+    <div class="row">
+      {{ form.project_id.label }}
+      <div class="col-auto">
+        {{ form.project_id(size=25, class="form-control", placeholder="e.g.
+        'A6F512E'") }} {% for error in form.project_id.errors %}
+        <span class="text-danger">{{ error }}</span>
+        {% endfor %}
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Start Annotating</button>
+      </div>
+    </div>
+  </form>
+  <div class="text-center mb-3">
+    <p>or <a href="{{ url_for('auth.login') }}">Login</a></p>
+  </div>
+</div>
+{% endblock %}

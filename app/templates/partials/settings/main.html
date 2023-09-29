@@ -1,0 +1,48 @@
+<form
+  action="{{ form_action }}"
+  method="post"
+  enctype="multipart/form-data"
+  class="d-grid gap-3"
+>
+  <div id="section-general">
+    <div
+      class="d-flex justify-content-between align-items-center my-3 header-dark"
+    >
+      <h2 class="mx-3">General</h2>
+    </div>
+  </div>
+
+  {% for field in form %} {% if field.type != 'FormField' and
+  field.widget.input_type != 'submit' and field.name != 'csrf_token' %}
+  <div class="form-floating mx-3">
+    {{ field(class="form-control", required=field.flags.required) }}
+    <label class="form-label" for="{{ field.id }}"
+      >{{ field.label.text }}</label
+    >
+  </div>
+  {% endif %} {% endfor %} {% for field in form if field.type == 'FormField' %}
+  <div id="section-{{ field.name }}">
+    <div
+      class="d-flex justify-content-between align-items-center my-3 header-dark"
+    >
+      <h2 class="mx-3">{{ field.label.text }}</h2>
+    </div>
+
+    <div class="d-grid gap-3">
+      {% for subfield in field %} {% if subfield.widget.input_type != 'hidden'
+      %}
+      <div class="form-floating mx-3">
+        {{ subfield(class="form-control", required=subfield.flags.required) }}
+        <label class="form-label" for="{{ subfield.id }}"
+          >{{ subfield.label.text }}</label
+        >
+      </div>
+      {% endif %} {% endfor %}
+    </div>
+  </div>
+  {% endfor %} {{ form.csrf_token() }}
+
+  <div class="d-grid col-xs-12 col-md-1 mb-3 mx-3" id="submit-container">
+    {{ form.submit(class="btn btn-primary", id="submit-button") }}
+  </div>
+</form>
