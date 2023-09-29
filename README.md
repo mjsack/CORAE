@@ -45,7 +45,7 @@
 
 2. Install [Python3](https://www.python.org/downloads).
 
-3. Install [FFmpeg](https://ffmpeg.org/download.html)
+3. Install [FFmpeg](https://ffmpeg.org/download.html).
 
 4. Navigate to the directory that you would like `CORAE` to be downloaded.
 
@@ -55,10 +55,10 @@
 $ git clone https://www.github.com/mjsack/CORAE.git
 ```
 
-5. Run `install_windows.bat` via Windows Explorer, or using the following command:
+5. Run `build_windows.bat` via Windows Explorer, or using the following command:
 
 ```bash
-$ .\install_windows.bat
+$ .\build_windows.bat
 ```
 
 ### Automatic Installation on Linux
@@ -83,10 +83,10 @@ $ sudo apt install ffmpeg
 $ git clone https://www.github.com/mjsack/CORAE.git
 ```
 
-4. Run `install_linux.sh`.
+4. Run `build_linux.sh`.
 
 ```bash
-$ bash install_linux.sh
+$ bash build_linux.sh
 ```
 
 ## Usage
