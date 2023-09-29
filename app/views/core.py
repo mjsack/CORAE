@@ -22,5 +22,5 @@ def documentation():
     Returns:
     - Rendered Template: Displays the documentation page.
     """
-    return render_template('documentation.html', title='Documentation')
+    return render_template('documentation.html', title='Documentation', header='Documentation')
 
