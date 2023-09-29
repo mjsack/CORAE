@@ -1,5 +1,6 @@
 const capacityElement = document.getElementById("settings-capacity");
-const videoSequenceElement = document.getElementById("settings-ordering");
+const couplingElement = document.getElementById("settings-coupling");
+const orderingElement = document.getElementById("settings-ordering");
 const boundingElement = document.getElementById("settings-bounding");
 const granularityElement = document.getElementById("settings-granularity");
 const ceilingElement = document.getElementById("settings-ceiling");
@@ -21,11 +22,6 @@ function toggleBoundingFields(isBounded, overwrite = true) {
       ceilingElement.value = "";
       floorElement.value = "";
     }
-
-    // Log values for debugging
-    console.log("Granularity: " + granularityElement.value);
-    console.log("Ceiling: " + ceilingElement.value);
-    console.log("Floor: " + floorElement.value);
   }
 }
 
@@ -35,8 +31,17 @@ boundingElement.addEventListener("change", function () {
 
 function toggleCapacityFields(isMultiple) {
   const displayValue = isMultiple ? "block" : "none";
-  videoSequenceElement.parentElement.style.display = displayValue;
+  couplingElement.parentElement.style.display = displayValue;
 }
+
+function toggleCouplingFields(isCoupled) {
+  const displayValue = !isCoupled ? "block" : "none";
+  orderingElement.parentElement.style.display = displayValue;
+}
+
+couplingElement.addEventListener("change", function () {
+  toggleCouplingFields(this.value === "coupled");
+});
 
 capacityElement.addEventListener("change", function () {
   toggleCapacityFields(this.value >= 2);
@@ -47,6 +52,7 @@ const settingsSection = document.getElementById("section-settings");
 
 toggleBoundingFields(boundingElement.value === "bounded", false);
 toggleCapacityFields(capacityElement.value >= 2);
+toggleCouplingFields(couplingElement.value === "coupled");
 
 function populatePresetSettings(presetId) {
   fetch(`/api/presets/${presetId}/settings`)

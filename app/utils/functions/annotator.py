@@ -84,7 +84,6 @@ def assign_and_order_videos(participants, videos, coupling, ordering):
 
         for participant in participants:
             for video in videos:
-                # Skip if this is an owned video in the coupled condition
                 if coupling == "coupled" and video in participant.videos:
                     continue
                 
@@ -295,14 +294,11 @@ def save_video_to_disk(video, project_id, session_id):
         current_app.logger.error(f"Error creating directory {SESSION_FOLDER_PATH}: {e}")
         raise
     
-    # Create a Video instance and generate a token for it
     video_instance = Video()
     video_instance.tokenize()
     
-    # Extract the file extension from the original filename
     extension = os.path.splitext(secure_filename(video.filename))[1]
     
-    # Construct the new filename using the token and the extracted extension
     filename = f"{video_instance.token}{extension}"
     
     VIDEO_FILE_PATH = os.path.join(SESSION_FOLDER_PATH, filename)
@@ -320,13 +316,12 @@ def save_video_to_disk(video, project_id, session_id):
     current_app.logger.debug(f"Video size on disk: {video_size} bytes")
     
     current_app.logger.info(f"Attempting to extract frame rate from {absolute_path_after}")
-    frame_rate = extract_frame_rate(absolute_path_after)  # Then, extract the frame rate
+    frame_rate = extract_frame_rate(absolute_path_after)
     current_app.logger.info(f"Extracted frame rate: {frame_rate}")
 
-    # Update the Video instance attributes
     video_instance.filename = filename
     video_instance.filepath = VIDEO_FILE_PATH
-    video_instance.frame_rate = frame_rate  # Set the extracted frame rate
+    video_instance.frame_rate = frame_rate
     db.session.add(video_instance)
     db.session.commit()
 
