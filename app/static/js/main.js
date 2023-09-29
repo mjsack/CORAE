@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", function () {
-  // Handling the collapse buttons
   const settingsButtons = document.querySelectorAll(
     '[data-bs-toggle="collapse"]'
   );
@@ -21,7 +20,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  // Handling the delete confirmation
   const deleteBtns = document.querySelectorAll(".btn-danger");
   deleteBtns.forEach((deleteBtn) => {
     let timeout;
@@ -38,9 +36,9 @@ document.addEventListener("DOMContentLoaded", function () {
           deleteBtn.innerHTML = '<i class="bi bi-trash"></i>';
           deleteBtn.classList.add("btn-danger");
           deleteBtn.classList.remove("btn-success");
-        }, 5000); // 5 seconds timeout
+        }, 5000);
       } else {
-        clearTimeout(timeout); // Clear the timeout
+        clearTimeout(timeout);
         e.target.closest("form").submit();
       }
     });
@@ -51,12 +49,11 @@ document.addEventListener("DOMContentLoaded", function () {
     setTimeout(() => {
       alert.classList.add("alert-slide-out");
 
-      // Once the transition is complete, close the alert
       alert.addEventListener("transitionend", function handler() {
         let bsAlert = new bootstrap.Alert(alert);
         bsAlert.close();
-        alert.removeEventListener("transitionend", handler); // Remove the event listener
+        alert.removeEventListener("transitionend", handler);
       });
-    }, 5000); // 5 seconds timeout
+    }, 5000);
   });
 });

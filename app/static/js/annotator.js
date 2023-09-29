@@ -10,11 +10,9 @@ let isPlaying = false;
 let intervalAnnotationModeEnabled = false;
 let intervalTime = 1000;
 
-// Update currentVideoId and currentVideoURL
 let currentVideoId = videos_data[currentVideoIndex].id;
 let currentVideoURL = videos_data[currentVideoIndex].url;
 
-// Event listeners
 videoElement.addEventListener("keydown", reemitKeydown);
 annotationSlider.addEventListener("keydown", reemitKeydown);
 videoElement.addEventListener("timeupdate", updateProgressBar);
@@ -60,7 +58,6 @@ function recordAnnotation() {
   const currentTimestamp = videoElement.currentTime;
   const currentValue = annotationSlider.value;
 
-  // Fetch the frame rate for the current video
   const frameRateElement = document.getElementById(
     `videoFrameRate_${currentVideoId}`
   );
@@ -68,7 +65,6 @@ function recordAnnotation() {
 
   const currentFrameNumber = Math.round(currentTimestamp * FRAME_RATE);
 
-  // Avoid recording annotations with zeroed-out values unless it's the start
   if (
     currentTimestamp === 0 &&
     currentFrameNumber === 0 &&
@@ -100,7 +96,7 @@ function recordAnnotation() {
     lastAnnotation.timestamp === currentTimestamp &&
     lastAnnotation.slider_position === currentValue
   ) {
-    return; // Skip adding duplicate annotation
+    return;
   }
 
   annotations[currentVideoId].push(annotation);
@@ -156,15 +152,6 @@ function togglePlayPause() {
   }
 }
 
-function captureCurrentFrame() {
-  const canvas = document.createElement("canvas");
-  canvas.width = videoElement.videoWidth;
-  canvas.height = videoElement.videoHeight;
-  const ctx = canvas.getContext("2d");
-  ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-  return canvas.toDataURL("image/jpeg", 0.95); // Convert to JPEG format with 95% quality
-}
-
 function updateProgressBar() {
   let percentage = (videoElement.currentTime / videoElement.duration) * 100;
   progressBar.style.width = percentage + "%";
@@ -206,11 +193,9 @@ function handleVideoEnd() {
   }
 
   if (currentVideoIndex < videos_data.length) {
-    // Update the currentVideoId and currentVideoURL after checking the valid index
     currentVideoId = videos_data[currentVideoIndex].id;
     currentVideoURL = videos_data[currentVideoIndex].url;
 
-    // Reset annotations for the new video
     if (!annotations[currentVideoId]) {
       annotations[currentVideoId] = [];
     }
