@@ -71,46 +71,35 @@ def assign_and_order_videos(participants, videos, coupling, ordering):
     - ordering (str): The ordering condition ("random" or other).
     """
     current_app.logger.debug(f"Number of participants: {len(participants)}, Number of videos: {len(videos)}")
-    
+
     try:
         if coupling == "coupled":
-            for i, participant in enumerate(participants):
-                owned_video = videos[i]
-                assoc = get_or_create_association(participant, owned_video)
+            for participant, video in zip(participants, videos):
+                assoc = get_or_create_association(participant, video)
                 assoc.owner = True
                 db.session.add(assoc)
-                current_app.logger.debug(
-                    f"Set owner relationship for video ID: {owned_video.id} and participant ID: {participant.id}")
 
         for participant in participants:
             for video in videos:
-                if coupling == "coupled" and video in participant.videos:
+                if coupling == "coupled" and any(assoc.owner and assoc.video == video for assoc in participant.video_associations):
                     continue
-                
-                get_or_create_association(participant, video)
-                current_app.logger.debug(
-                    f"Associating video ID: {video.id} with participant ID: {participant.id}")
-
+                assoc = get_or_create_association(participant, video)
+                db.session.add(assoc)
 
         if ordering == "random":
             for participant in participants:
-                random.shuffle(participant.videos)
-
-                for index, video in enumerate(participant.videos):
+                participant_videos = [assoc.video for assoc in participant.video_associations if not assoc.owner]
+                random.shuffle(participant_videos)
+                for index, video in enumerate(participant_videos):
                     assoc = get_or_create_association(participant, video)
                     assoc.order = index + 1
                     db.session.add(assoc)
 
-        for participant in participants:
-            associated_video_ids = [video.id for video in participant.videos]
-            current_app.logger.debug(
-                f"Participant ID: {participant.id} associated with video IDs: {associated_video_ids}")
-
         db.session.commit()
 
     except SQLAlchemyError as e:
-        current_app.logger.error(f"Error during video-participant association: {e}")
         db.session.rollback()
+        current_app.logger.error(f"Error during video-participant association: {e}")
         raise
     except Exception as e:
         current_app.logger.error(f"Unexpected error during video-participant association: {e}")
