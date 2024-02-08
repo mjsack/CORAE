@@ -11,37 +11,31 @@ from ...models import Annotation, Participant, Video, ParticipantVideoAssociatio
 from ..extensions import db
 
 
-def extract_frame_rate(video_path):
+def extract_video_properties(video_path):
     """
-    Extracts the frame rate of a video using ffmpeg-python.
+    Extracts the frame rate and duration of a video using ffmpeg.
 
     Args:
     - video_path (str): Path to the video file.
 
     Returns:
     - float: Frame rate of the video.
+    - float: Duration of the video in seconds.
     """
-    current_app.logger.debug(f"Starting frame rate extraction for video: {video_path}")
     try:
         probe = ffmpeg.probe(video_path)
-        current_app.logger.debug(f"FFmpeg probe result: {json.dumps(probe, indent=2)}")
-        
         stream_data = next((stream for stream in probe['streams'] if stream['codec_type'] == 'video'), None)
-        current_app.logger.debug(f"Video stream data: {json.dumps(stream_data, indent=2)}")
-
         r_frame_rate = stream_data['r_frame_rate']
         num, denom = map(int, r_frame_rate.split('/'))
         frame_rate = num / denom
-        return frame_rate
 
-    except ffmpeg.Error as e:
-        current_app.logger.error(f"Error extracting frame rate using FFmpeg for video: {video_path}. Error: {e}")
-        return None
+        duration = float(stream_data['duration'])
+        
+        return frame_rate, duration
+
     except Exception as e:
-        current_app.logger.error(f"Unexpected error during frame rate extraction for video: {video_path}. Error: {e}")
-        return None
-    finally:
-        current_app.logger.debug(f"Finished frame rate extraction for video: {video_path}")
+        current_app.logger.error(f"Error extracting video properties using FFmpeg for video: {video_path}. Error: {e}")
+        return None, None
         
 def get_or_create_association(participant, video):
     """
@@ -302,12 +296,13 @@ def save_video_to_disk(video, project_id, session_id):
     current_app.logger.debug(f"Video size on disk: {video_size} bytes")
     
     current_app.logger.info(f"Attempting to extract frame rate from {absolute_path_after}")
-    frame_rate = extract_frame_rate(absolute_path_after)
-    current_app.logger.info(f"Extracted frame rate: {frame_rate}")
+    frame_rate, duration = extract_video_properties(absolute_path_after)
+    current_app.logger.info(f"Extracted frame rate: {frame_rate}, Duration: {duration}")
 
     video_instance.filename = filename
     video_instance.filepath = VIDEO_FILE_PATH
     video_instance.frame_rate = frame_rate
+    video_instance.duration = duration
     db.session.add(video_instance)
     db.session.commit()
 
