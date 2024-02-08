@@ -173,8 +173,13 @@ def participant_annotations_to_json(participant):
         "participant_token": participant.token,
         "videos": []
     }
-       
+
     for video in participant.videos:
+        video_data = {
+            "video_id": video.id,
+            "duration": video.duration,
+            "frame_rate": video.frame_rate
+        }
         annotations = Annotation.query.filter_by(participant_id=participant.id, video_id=video.id).all()
         annotations_data = [{
             "timecode": annotation.timecode,
@@ -182,16 +187,10 @@ def participant_annotations_to_json(participant):
             "slider_position": annotation.slider_position
         } for annotation in annotations]
         
-        video_data = {
-            "video_id": video.id,
-            "duration": video.duration,
-            "frame_rate": video.frame_rate,
-            "annotations": annotations_data
-        }
-        
+        video_data["annotations"] = annotations_data
         participant_data["videos"].append(video_data)
-        current_app.logger.debug(f"Participant data before JSON serialization: {participant_data}")
 
+    current_app.logger.debug(f"Participant data before JSON serialization: {participant_data}")
     return participant_data
 
 
