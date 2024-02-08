@@ -119,43 +119,40 @@ def save_annotations(request, participant):
     try:
         current_app.logger.info(f"Saving annotations for participant ID: {participant.id}")
         data = request.get_json()
-        video_id = data.get('video_id')
-        
         annotations_data_dict = data.get('annotations')
-        if not video_id and annotations_data_dict:
-            video_id = list(annotations_data_dict.keys())[0]
-            
-        current_app.logger.info(f"Value for 'video_id' assigned as: {video_id}")
 
-        video = Video.query.get(video_id)
-        if video is None:
-            error_message = f"Video with ID {video_id} not found in the database."
-            current_app.logger.error(error_message)
-            flash(error_message, 'danger')
-            return redirect(url_for('core.index'))
+        for video_id_str, annotations_list in annotations_data_dict.items():
+            video_id = int(video_id_str)
+            video = Video.query.get(video_id)
+            if video is None:
+                current_app.logger.error(f"Video with ID {video_id} not found in the database.")
+                continue
 
-        for video_id_key, annotations_list in annotations_data_dict.items():
             for annotation_data in annotations_list:
-                annotation = Annotation(
+                existing_annotation = Annotation.query.filter_by(
                     participant_id=participant.id,
                     video_id=video.id,
                     timecode=annotation_data["timestamp"],
+                    frame_number=annotation_data["video_frame"]
+                ).first()
+                if existing_annotation:
+                    continue  # Skip duplicate entry
+                annotation = Annotation(
+                    timecode=annotation_data["timestamp"],
                     frame_number=annotation_data["video_frame"],
-                    slider_position=annotation_data["slider_position"]
+                    slider_position=annotation_data["slider_position"],
+                    participant_id=participant.id,
+                    video_id=video.id
                 )
                 db.session.add(annotation)
 
-        progress = request.form.get('progress', 0.0)
-        if 0 <= float(progress) <= 100:
-            participant.progress = float(progress)
-
-        db.session.commit()
-        current_app.logger.info(f"Annotations saved successfully for participant ID: {participant.id} and video ID: {video_id}")
         participant.has_submitted = True
-        flash('Thank you for completing the annotations!')
+        db.session.commit()
+
+        current_app.logger.info(f"Annotations saved successfully for participant ID: {participant.id}")
     except Exception as e:
+        db.session.rollback()
         current_app.logger.error(f"Error saving annotations: {e}")
-        current_app.logger.debug(f"Problematic data: {request.data}")
         flash('There was an error saving your annotations. Please try again.', 'danger')
     finally:
         return redirect(url_for('core.index'))

@@ -38,6 +38,8 @@ def join_session(token):
     current_app.logger.info(f"Redirecting to annotator route with token: {token}")
     participant_instance.last_accessed = get_current_time()
     participant_instance.has_accessed = True
+    db.session.commit()
+    
     return redirect(url_for('participant.annotator', token=token))
 
 @participant.route('/annotator/<token>', methods=['GET', 'POST'])
