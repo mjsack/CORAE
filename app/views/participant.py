@@ -38,6 +38,8 @@ def join_session(token):
     current_app.logger.info(f"Redirecting to annotator route with token: {token}")
     participant_instance.last_accessed = get_current_time()
     participant_instance.has_accessed = True
+    db.session.commit()
+    
     return redirect(url_for('participant.annotator', token=token))
 
 @participant.route('/annotator/<token>', methods=['GET', 'POST'])
@@ -112,11 +114,13 @@ def annotator(token):
                 return jsonify({"error": f"There was an error saving your annotations: {str(e)}"}), 500
 
         videos_data = []
-        for video in participant_instance.video_associations:
+        for video_assoc in participant_instance.video_associations:
+            if project_instance.settings.coupling == "coupled" and video_assoc.owner:
+                continue  # Skip this video if the participant is the owner in a coupled setting
             video_info = {
-                "id": video.video.id,
-                "url": url_for('participant.serve_video', project_id=project_instance.id, session_id=session_instance.id, filename=video.video.filename),
-                "frame_rate": video.video.frame_rate
+                "id": video_assoc.video.id,
+                "url": url_for('participant.serve_video', project_id=project_instance.id, session_id=session_instance.id, filename=video_assoc.video.filename),
+                "frame_rate": video_assoc.video.frame_rate
             }
             videos_data.append(video_info)
 

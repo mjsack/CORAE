@@ -71,47 +71,35 @@ def assign_and_order_videos(participants, videos, coupling, ordering):
     - ordering (str): The ordering condition ("random" or other).
     """
     current_app.logger.debug(f"Number of participants: {len(participants)}, Number of videos: {len(videos)}")
-    
+
     try:
         if coupling == "coupled":
-            for i, participant in enumerate(participants):
-                owned_video = videos[i]
-                assoc = get_or_create_association(participant, owned_video)
+            for participant, video in zip(participants, videos):
+                assoc = get_or_create_association(participant, video)
                 assoc.owner = True
                 db.session.add(assoc)
-                current_app.logger.debug(
-                    f"Set owner relationship for video ID: {owned_video.id} and participant ID: {participant.id}")
 
         for participant in participants:
             for video in videos:
-                # Skip if this is an owned video in the coupled condition
-                if coupling == "coupled" and video in participant.videos:
+                if coupling == "coupled" and any(assoc.owner and assoc.video == video for assoc in participant.video_associations):
                     continue
-                
-                get_or_create_association(participant, video)
-                current_app.logger.debug(
-                    f"Associating video ID: {video.id} with participant ID: {participant.id}")
-
+                assoc = get_or_create_association(participant, video)
+                db.session.add(assoc)
 
         if ordering == "random":
             for participant in participants:
-                random.shuffle(participant.videos)
-
-                for index, video in enumerate(participant.videos):
+                participant_videos = [assoc.video for assoc in participant.video_associations if not assoc.owner]
+                random.shuffle(participant_videos)
+                for index, video in enumerate(participant_videos):
                     assoc = get_or_create_association(participant, video)
                     assoc.order = index + 1
                     db.session.add(assoc)
 
-        for participant in participants:
-            associated_video_ids = [video.id for video in participant.videos]
-            current_app.logger.debug(
-                f"Participant ID: {participant.id} associated with video IDs: {associated_video_ids}")
-
         db.session.commit()
 
     except SQLAlchemyError as e:
-        current_app.logger.error(f"Error during video-participant association: {e}")
         db.session.rollback()
+        current_app.logger.error(f"Error during video-participant association: {e}")
         raise
     except Exception as e:
         current_app.logger.error(f"Unexpected error during video-participant association: {e}")
@@ -131,43 +119,40 @@ def save_annotations(request, participant):
     try:
         current_app.logger.info(f"Saving annotations for participant ID: {participant.id}")
         data = request.get_json()
-        video_id = data.get('video_id')
-        
         annotations_data_dict = data.get('annotations')
-        if not video_id and annotations_data_dict:
-            video_id = list(annotations_data_dict.keys())[0]
-            
-        current_app.logger.info(f"Value for 'video_id' assigned as: {video_id}")
 
-        video = Video.query.get(video_id)
-        if video is None:
-            error_message = f"Video with ID {video_id} not found in the database."
-            current_app.logger.error(error_message)
-            flash(error_message, 'danger')
-            return redirect(url_for('core.index'))
+        for video_id_str, annotations_list in annotations_data_dict.items():
+            video_id = int(video_id_str)
+            video = Video.query.get(video_id)
+            if video is None:
+                current_app.logger.error(f"Video with ID {video_id} not found in the database.")
+                continue
 
-        for video_id_key, annotations_list in annotations_data_dict.items():
             for annotation_data in annotations_list:
-                annotation = Annotation(
+                existing_annotation = Annotation.query.filter_by(
                     participant_id=participant.id,
                     video_id=video.id,
                     timecode=annotation_data["timestamp"],
+                    frame_number=annotation_data["video_frame"]
+                ).first()
+                if existing_annotation:
+                    continue  # Skip duplicate entry
+                annotation = Annotation(
+                    timecode=annotation_data["timestamp"],
                     frame_number=annotation_data["video_frame"],
-                    slider_position=annotation_data["slider_position"]
+                    slider_position=annotation_data["slider_position"],
+                    participant_id=participant.id,
+                    video_id=video.id
                 )
                 db.session.add(annotation)
 
-        progress = request.form.get('progress', 0.0)
-        if 0 <= float(progress) <= 100:
-            participant.progress = float(progress)
-
-        db.session.commit()
-        current_app.logger.info(f"Annotations saved successfully for participant ID: {participant.id} and video ID: {video_id}")
         participant.has_submitted = True
-        flash('Thank you for completing the annotations!')
+        db.session.commit()
+
+        current_app.logger.info(f"Annotations saved successfully for participant ID: {participant.id}")
     except Exception as e:
+        db.session.rollback()
         current_app.logger.error(f"Error saving annotations: {e}")
-        current_app.logger.debug(f"Problematic data: {request.data}")
         flash('There was an error saving your annotations. Please try again.', 'danger')
     finally:
         return redirect(url_for('core.index'))
@@ -295,14 +280,11 @@ def save_video_to_disk(video, project_id, session_id):
         current_app.logger.error(f"Error creating directory {SESSION_FOLDER_PATH}: {e}")
         raise
     
-    # Create a Video instance and generate a token for it
     video_instance = Video()
     video_instance.tokenize()
     
-    # Extract the file extension from the original filename
     extension = os.path.splitext(secure_filename(video.filename))[1]
     
-    # Construct the new filename using the token and the extracted extension
     filename = f"{video_instance.token}{extension}"
     
     VIDEO_FILE_PATH = os.path.join(SESSION_FOLDER_PATH, filename)
@@ -320,13 +302,12 @@ def save_video_to_disk(video, project_id, session_id):
     current_app.logger.debug(f"Video size on disk: {video_size} bytes")
     
     current_app.logger.info(f"Attempting to extract frame rate from {absolute_path_after}")
-    frame_rate = extract_frame_rate(absolute_path_after)  # Then, extract the frame rate
+    frame_rate = extract_frame_rate(absolute_path_after)
     current_app.logger.info(f"Extracted frame rate: {frame_rate}")
 
-    # Update the Video instance attributes
     video_instance.filename = filename
     video_instance.filepath = VIDEO_FILE_PATH
-    video_instance.frame_rate = frame_rate  # Set the extracted frame rate
+    video_instance.frame_rate = frame_rate
     db.session.add(video_instance)
     db.session.commit()
 

@@ -111,15 +111,12 @@ def view_session(project_id, session_id):
     session = Session.query.get_or_404(session_id)
     project = Project.query.get_or_404(project_id)
     
-    # If the session does not exist, redirect to the dashboard
     if not session:
         flash('Session not found.', 'danger')
         return redirect(url_for('dashboard'))
 
-    # Fetch participants associated with the session
     participants = Participant.query.filter_by(session_id=session.id).all()
 
-    # Fetch videos associated with each participant
     participant_videos = {}
     for participant in participants:
         participant_videos[participant.id] = db.session.query(Video).join(
@@ -130,10 +127,9 @@ def view_session(project_id, session_id):
     
     for i, participant in enumerate(participants):
         form.participants[i].data = participant.name
-        # Ensure there's a VideoForm instance for this participant
+
         while len(form.videos) <= i:
             form.videos.append_entry()
-        # Set the video data
         if participant_videos[participant.id]:
             form.videos[i].data = participant_videos[participant.id][0].filename
 
@@ -196,20 +192,16 @@ def download_participant_data(session_id, token):
     session = Session.query.get_or_404(session_id)
     project_instance = session.project
 
-    # Ensure the project belongs to the current user
     if project_instance.researcher != current_user:
         flash('You do not have access to this session.', 'error')
         return redirect(url_for('dashboard.dash'))
 
-    # Check if the participant belongs to the given session.
     if participant_instance.session.id != session_id:
         flash('Mismatch between session and participant.', 'error')
         return redirect(url_for('dashboard.dash'))
 
-    # Use the helper method to convert the participant's annotations to JSON format
     annotation_data = participant_annotations_to_json(participant_instance)
     
-    # Use Flask's jsonify to return the data with the right headers for downloading
     response = jsonify(annotation_data)
     response.headers.set('Content-Disposition', 'attachment', filename=f'participant_{participant_instance.id}_annotations.json')
     return response
@@ -229,7 +221,6 @@ def download_aggregate_data(session_id):
     current_app.logger.info(f"Downloading aggregate data for session ID: {session_id}")
     session = Session.query.get_or_404(session_id)
     
-    # Loop through the participants and collect their data
     participants_data = []
     for participant in session.participants:
         participants_data.append(participant_annotations_to_json(participant))

@@ -4,17 +4,20 @@ const annotationSlider = document.getElementById("annotationSlider");
 const videosDataElement = document.getElementById("videosData");
 const videos_data = JSON.parse(videosDataElement.textContent);
 let annotations = {};
+
+videos_data.forEach((video) => {
+  annotations[video.id] = [];
+});
+
 let currentVideoIndex = 0;
 let intervalAnnotation = null;
 let isPlaying = false;
 let intervalAnnotationModeEnabled = false;
 let intervalTime = 1000;
 
-// Update currentVideoId and currentVideoURL
 let currentVideoId = videos_data[currentVideoIndex].id;
 let currentVideoURL = videos_data[currentVideoIndex].url;
 
-// Event listeners
 videoElement.addEventListener("keydown", reemitKeydown);
 annotationSlider.addEventListener("keydown", reemitKeydown);
 videoElement.addEventListener("timeupdate", updateProgressBar);
@@ -28,8 +31,11 @@ annotationSlider.addEventListener("input", function () {
 });
 
 videoElement.addEventListener("play", function () {
-  if (!annotations[currentVideoId]) {
-    annotations[currentVideoId] = [];
+  annotationSlider.value = 0;
+  if (
+    !annotations[currentVideoId] ||
+    annotations[currentVideoId].length === 0
+  ) {
     const startingAnnotation = {
       timestamp: 0,
       video_frame: 0,
@@ -59,24 +65,10 @@ videoElement.addEventListener("pause", function () {
 function recordAnnotation() {
   const currentTimestamp = videoElement.currentTime;
   const currentValue = annotationSlider.value;
-
-  // Fetch the frame rate for the current video
-  const frameRateElement = document.getElementById(
-    `videoFrameRate_${currentVideoId}`
+  const FRAME_RATE = JSON.parse(
+    document.getElementById(`videoFrameRate_${currentVideoId}`).textContent
   );
-  const FRAME_RATE = JSON.parse(frameRateElement.textContent);
-
   const currentFrameNumber = Math.round(currentTimestamp * FRAME_RATE);
-
-  // Avoid recording annotations with zeroed-out values unless it's the start
-  if (
-    currentTimestamp === 0 &&
-    currentFrameNumber === 0 &&
-    annotations[currentVideoId] &&
-    annotations[currentVideoId].length > 0
-  ) {
-    return;
-  }
 
   if (!annotations[currentVideoId]) {
     annotations[currentVideoId] = [];
@@ -89,22 +81,17 @@ function recordAnnotation() {
     video_id: currentVideoId,
   };
 
-  console.log("Recording annotation:", annotation);
+  // Enhanced duplicate check logic
+  const isDuplicate = annotations[currentVideoId].some(
+    (ann) => Math.abs(ann.timestamp - annotation.timestamp) < 0.05 // Adjust the threshold as needed
+  );
 
-  const lastAnnotation = annotations[currentVideoId].length
-    ? annotations[currentVideoId][annotations[currentVideoId].length - 1]
-    : null;
-
-  if (
-    lastAnnotation &&
-    lastAnnotation.timestamp === currentTimestamp &&
-    lastAnnotation.slider_position === currentValue
-  ) {
-    return; // Skip adding duplicate annotation
+  if (!isDuplicate) {
+    annotations[currentVideoId].push(annotation);
   }
+}
 
-  annotations[currentVideoId].push(annotation);
-
+function updateAnnotationsInput() {
   const annotationsInput = document.getElementById("annotations");
   annotationsInput.value = JSON.stringify(annotations);
 }
@@ -156,15 +143,6 @@ function togglePlayPause() {
   }
 }
 
-function captureCurrentFrame() {
-  const canvas = document.createElement("canvas");
-  canvas.width = videoElement.videoWidth;
-  canvas.height = videoElement.videoHeight;
-  const ctx = canvas.getContext("2d");
-  ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-  return canvas.toDataURL("image/jpeg", 0.95); // Convert to JPEG format with 95% quality
-}
-
 function updateProgressBar() {
   let percentage = (videoElement.currentTime / videoElement.duration) * 100;
   progressBar.style.width = percentage + "%";
@@ -183,87 +161,95 @@ function updateSliderAppearance() {
 }
 
 function handleVideoEnd() {
+  if (currentVideoIndex < videos_data.length - 1) {
+    const nextVideoId = videos_data[currentVideoIndex + 1].id;
+    annotations[nextVideoId] = annotations[nextVideoId] || [];
+    annotations[nextVideoId].push({
+      timestamp: 0,
+      video_frame: 0,
+      slider_position: 0,
+      video_id: nextVideoId,
+    });
+  }
   console.log("Current Video Index:", currentVideoIndex);
   console.log("Annotations:", annotations);
   currentVideoIndex++;
 
-  const participantTokenElement = document.getElementById("participantToken");
-  const participant_token = JSON.parse(participantTokenElement.textContent);
-  const videoUrlsElement = document.getElementById("videosData");
-  const video_urls = JSON.parse(videoUrlsElement.textContent);
-  const csrf_token = document
-    .querySelector('meta[name="csrf-token"]')
-    .getAttribute("content");
-  const videoIds = videos_data.map((video) => video.id);
-
-  if (
-    !annotations[videoIds[currentVideoIndex - 1]] ||
-    annotations[videoIds[currentVideoIndex - 1]].length === 0
-  ) {
-    console.error("No annotations found for the current video.");
-    alert("Please annotate the video before proceeding.");
-    return;
-  }
-
   if (currentVideoIndex < videos_data.length) {
-    // Update the currentVideoId and currentVideoURL after checking the valid index
     currentVideoId = videos_data[currentVideoIndex].id;
     currentVideoURL = videos_data[currentVideoIndex].url;
-
-    // Reset annotations for the new video
-    if (!annotations[currentVideoId]) {
-      annotations[currentVideoId] = [];
-    }
-
     videoElement.querySelector("source").src = currentVideoURL;
     videoElement.load();
     videoElement.play();
   } else {
-    console.log("Sending annotations to server:", annotations);
-    fetch(`/annotator/${participant_token}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": csrf_token,
-      },
-      body: JSON.stringify({
-        annotations: annotations,
-        participant_token: participant_token,
-      }),
-    })
-      .then((response) => {
-        if (!response.ok) {
-          if (
-            response.headers.get("Content-Type").includes("application/json")
-          ) {
-            return response.json().then((data) => {
-              throw new Error(
-                `Server responded with status ${response.status}: ${
-                  data.error || response.statusText
-                }`
-              );
-            });
-          } else {
-            return response.text().then((text) => {
-              throw new Error(
-                `Server responded with status ${response.status}: ${text}`
-              );
-            });
-          }
-        }
-        return response.json();
-      })
-      .then((data) => {
-        if (data.message) {
-          alert(data.message);
-          window.location.href = "/";
-        } else if (data.error) {
-          alert(data.error);
-        }
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-        alert(`An error occurred: ${error.message}`);
-      });
+    console.log(
+      "All videos completed. Sending annotations to server:",
+      annotations
+    );
+
+    if (currentVideoIndex >= videos_data.length) {
+      const csrfToken = document
+        .querySelector('meta[name="csrf-token"]')
+        .getAttribute("content");
+      submitAnnotations(annotations, csrfToken);
+    } else {
+      console.log(
+        "Current video index:",
+        currentVideoIndex,
+        "is invalid for comparison to video data length:",
+        videos_data.length
+      );
+    }
   }
+}
+
+const participantTokenElement = document.getElementById("participantToken");
+const participantToken = JSON.parse(participantTokenElement.textContent);
+
+function submitAnnotations(annotationsData, csrfToken) {
+  fetch(`/annotator/${participantToken}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": csrfToken,
+    },
+    body: JSON.stringify({
+      annotations: annotationsData,
+      participant_token: participantToken,
+    }),
+  })
+    .then((response) => {
+      if (!response.ok) {
+        return response.json().then((data) => {
+          throw new Error(
+            `Server responded with status ${response.status}: ${
+              data.error || response.statusText
+            }`
+          );
+        });
+      }
+      return response.json();
+    })
+    .then((data) => {
+      if (data.message) {
+        annotations[currentVideoId].submitted = true;
+        alert(data.message);
+        window.location.href = "/";
+      } else if (data.error) {
+        alert(data.error);
+      }
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+      alert(`An error occurred: ${error.message}`);
+    });
+
+  function periodicSync() {
+    if (currentVideoIndex < videos_data.length) {
+      submitAnnotations();
+    }
+  }
+
+  // Call periodicSync function at desired intervals
+  setInterval(periodicSync, 300000); // Sync every 5 minutes
 }

@@ -1,12 +1,14 @@
+instance/uploads/*
 venv/
 migrations/
 ignore/
 .vscode/
 .idea/
 *.db
-*.pyc
+*.pyc 
 *.log
 .DS_Store
+
 launch.bat
 
 
