@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [1.0.31] - 2024/02/08
 
+- Added functionality for downloading aggregate session data under the session view.
+- Added ordering for JSON output to improve data legibility.
 - Fixed bug where video durations were not extracted during upload, resulting in `null` values for JSON output.
 
 ## [1.0.3] - 2024/02/08
