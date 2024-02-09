@@ -130,24 +130,33 @@ def save_annotations(request, participant):
                     frame_number=annotation_data["video_frame"]
                 ).first()
                 if existing_annotation:
-                    continue  # Skip duplicate entry
+                    continue
+                
+                if annotation_data.get('trigger') not in ['start', 'input', 'end']:
+                    current_app.logger.error(f"Invalid trigger value: {annotation_data.get('trigger')}")
+                    continue
+
                 annotation = Annotation(
                     timecode=annotation_data["timestamp"],
                     frame_number=annotation_data["video_frame"],
                     slider_position=annotation_data["slider_position"],
+                    trigger=annotation_data["trigger"],
                     participant_id=participant.id,
                     video_id=video.id
                 )
+
                 db.session.add(annotation)
 
         participant.has_submitted = True
         db.session.commit()
+        current_app.logger.debug("Database commit successful")
 
         current_app.logger.info(f"Annotations saved successfully for participant ID: {participant.id}")
     except Exception as e:
         db.session.rollback()
-        current_app.logger.error(f"Error saving annotations: {e}")
+        current_app.logger.error(f"Error saving annotations: {e}", exc_info=True)
         flash('There was an error saving your annotations. Please try again.', 'danger')
+
     finally:
         return redirect(url_for('core.index'))
         
@@ -181,18 +190,23 @@ def participant_annotations_to_json(participant):
             "frame_rate": video.frame_rate
         }
         annotations = Annotation.query.filter_by(participant_id=participant.id, video_id=video.id).all()
-        annotations_data = [{
-            "timecode": annotation.timecode,
-            "frame_number": annotation.frame_number,
-            "slider_position": annotation.slider_position
-        } for annotation in annotations]
+        current_app.logger.debug(f"Retrieved annotations: {annotations}")
+
+        annotations_data = []
+        for annotation in annotations:
+            annotation_dict = {
+                "timecode": annotation.timecode,
+                "frame_number": annotation.frame_number,
+                "slider_position": annotation.slider_position,
+                "trigger": annotation.trigger
+            }
+            annotations_data.append(annotation_dict)
         
         video_data["annotations"] = annotations_data
         participant_data["videos"].append(video_data)
 
     current_app.logger.debug(f"Participant data before JSON serialization: {participant_data}")
     return participant_data
-
 
 def update_participant_progress(participant_id, progress_value):
     """

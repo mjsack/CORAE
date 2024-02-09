@@ -4,8 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.31] - 2024/02/08
+## [1.1.0] - 2024/02/08
 
+- Added `trigger` column to the JSON output to indicate the triggering event for each annotation (e.g. `start`, `end`, `interval`, and `input`).
+- Added a trigger that bookends each video with a `start` and `end` annotation.
 - Added functionality for downloading aggregate session data under the session view.
 - Added ordering for JSON output to improve data legibility.
 - Fixed bug where video durations were not extracted during upload, resulting in `null` values for JSON output.

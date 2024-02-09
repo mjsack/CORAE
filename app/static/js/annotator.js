@@ -26,43 +26,41 @@ document.addEventListener("reemittedKeydown", handleKey);
 videoElement.addEventListener("ended", handleVideoEnd);
 annotationSlider.addEventListener("input", function () {
   if (isPlaying) {
-    recordAnnotation();
+    recordAnnotation("input");
   }
 });
 
+let isFirstPlay = true;
+
 videoElement.addEventListener("play", function () {
-  annotationSlider.value = 0;
-  if (
-    !annotations[currentVideoId] ||
-    annotations[currentVideoId].length === 0
-  ) {
-    const startingAnnotation = {
-      timestamp: 0,
-      video_frame: 0,
-      slider_position: 0,
-      video_id: currentVideoId,
-    };
-    annotations[currentVideoId].push(startingAnnotation);
+  if (isFirstPlay) {
+    annotationSlider.value = 0;
+    recordAnnotation("start");
+    isFirstPlay = false;
   }
 
   isPlaying = true;
-
   updateSliderAppearance();
+
   if (intervalAnnotationModeEnabled) {
-    intervalAnnotation = setInterval(recordAnnotation, intervalTime);
+    intervalAnnotation = setInterval(
+      () => recordAnnotation("interval"),
+      intervalTime
+    );
   }
 });
 
 videoElement.addEventListener("pause", function () {
   isPlaying = false;
   updateSliderAppearance();
+
   if (intervalAnnotation) {
     clearInterval(intervalAnnotation);
     intervalAnnotation = null;
   }
 });
 
-function recordAnnotation() {
+function recordAnnotation(triggerType = "input") {
   const currentTimestamp = videoElement.currentTime;
   const currentValue = annotationSlider.value;
   const FRAME_RATE = JSON.parse(
@@ -78,12 +76,13 @@ function recordAnnotation() {
     timestamp: currentTimestamp,
     video_frame: currentFrameNumber,
     slider_position: currentValue,
-    video_id: currentVideoId,
+    trigger: triggerType,
   };
 
-  // Enhanced duplicate check logic
+  console.log("Recording annotation:", annotation);
+
   const isDuplicate = annotations[currentVideoId].some(
-    (ann) => Math.abs(ann.timestamp - annotation.timestamp) < 0.05 // Adjust the threshold as needed
+    (ann) => Math.abs(ann.timestamp - annotation.timestamp) < 0.05
   );
 
   if (!isDuplicate) {
@@ -132,7 +131,7 @@ function adjustSliderValue(delta) {
     Math.min(newValue, annotationSlider.max)
   );
   annotationSlider.value = newValue;
-  recordAnnotation();
+  recordAnnotation("input");
 }
 
 function togglePlayPause() {
@@ -161,6 +160,8 @@ function updateSliderAppearance() {
 }
 
 function handleVideoEnd() {
+  recordAnnotation("end");
+  isFirstPlay = true;
   if (currentVideoIndex < videos_data.length - 1) {
     const nextVideoId = videos_data[currentVideoIndex + 1].id;
     annotations[nextVideoId] = annotations[nextVideoId] || [];
@@ -168,6 +169,7 @@ function handleVideoEnd() {
       timestamp: 0,
       video_frame: 0,
       slider_position: 0,
+      trigger: "start",
       video_id: nextVideoId,
     });
   }
@@ -207,6 +209,8 @@ const participantTokenElement = document.getElementById("participantToken");
 const participantToken = JSON.parse(participantTokenElement.textContent);
 
 function submitAnnotations(annotationsData, csrfToken) {
+  console.log("Submitting annotations:", annotationsData);
+
   fetch(`/annotator/${participantToken}`, {
     method: "POST",
     headers: {
@@ -244,12 +248,10 @@ function submitAnnotations(annotationsData, csrfToken) {
       alert(`An error occurred: ${error.message}`);
     });
 
-  function periodicSync() {
-    if (currentVideoIndex < videos_data.length) {
-      submitAnnotations();
-    }
+  if (intervalAnnotationModeEnabled) {
+    intervalAnnotation = setInterval(
+      () => recordAnnotation("interval"),
+      intervalTime
+    );
   }
-
-  // Call periodicSync function at desired intervals
-  setInterval(periodicSync, 300000); // Sync every 5 minutes
 }

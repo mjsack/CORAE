@@ -101,7 +101,8 @@ def annotator(token):
                         video_id=video_id,
                         timecode=annotation_data.get("timestamp"),
                         frame_number=annotation_data.get("video_frame"),
-                        slider_position=annotation_data.get("slider_position")
+                        slider_position=annotation_data.get("slider_position"),
+                        trigger=annotation_data.get("trigger")
                     )
                     db.session.add(annotation)
 
