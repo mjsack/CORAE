@@ -253,6 +253,7 @@ class Annotation(BaseModel):
     timecode = db.Column(db.Float, nullable=False)
     frame_number = db.Column(db.Integer, nullable=False)
     slider_position = db.Column(db.Float, nullable=False)
+    trigger = db.Column(db.String(50))
 
     participant = db.relationship('Participant', backref=db.backref('annotations', cascade='all, delete-orphan'))
     video = db.relationship('Video', backref=db.backref('annotations', cascade='all, delete-orphan'))

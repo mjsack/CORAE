@@ -11,37 +11,31 @@ from ...models import Annotation, Participant, Video, ParticipantVideoAssociatio
 from ..extensions import db
 
 
-def extract_frame_rate(video_path):
+def extract_video_properties(video_path):
     """
-    Extracts the frame rate of a video using ffmpeg-python.
+    Extracts the frame rate and duration of a video using ffmpeg.
 
     Args:
     - video_path (str): Path to the video file.
 
     Returns:
     - float: Frame rate of the video.
+    - float: Duration of the video in seconds.
     """
-    current_app.logger.debug(f"Starting frame rate extraction for video: {video_path}")
     try:
         probe = ffmpeg.probe(video_path)
-        current_app.logger.debug(f"FFmpeg probe result: {json.dumps(probe, indent=2)}")
-        
         stream_data = next((stream for stream in probe['streams'] if stream['codec_type'] == 'video'), None)
-        current_app.logger.debug(f"Video stream data: {json.dumps(stream_data, indent=2)}")
-
         r_frame_rate = stream_data['r_frame_rate']
         num, denom = map(int, r_frame_rate.split('/'))
         frame_rate = num / denom
-        return frame_rate
 
-    except ffmpeg.Error as e:
-        current_app.logger.error(f"Error extracting frame rate using FFmpeg for video: {video_path}. Error: {e}")
-        return None
+        duration = float(stream_data['duration'])
+        
+        return frame_rate, duration
+
     except Exception as e:
-        current_app.logger.error(f"Unexpected error during frame rate extraction for video: {video_path}. Error: {e}")
-        return None
-    finally:
-        current_app.logger.debug(f"Finished frame rate extraction for video: {video_path}")
+        current_app.logger.error(f"Error extracting video properties using FFmpeg for video: {video_path}. Error: {e}")
+        return None, None
         
 def get_or_create_association(participant, video):
     """
@@ -136,24 +130,33 @@ def save_annotations(request, participant):
                     frame_number=annotation_data["video_frame"]
                 ).first()
                 if existing_annotation:
-                    continue  # Skip duplicate entry
+                    continue
+                
+                if annotation_data.get('trigger') not in ['start', 'input', 'end']:
+                    current_app.logger.error(f"Invalid trigger value: {annotation_data.get('trigger')}")
+                    continue
+
                 annotation = Annotation(
                     timecode=annotation_data["timestamp"],
                     frame_number=annotation_data["video_frame"],
                     slider_position=annotation_data["slider_position"],
+                    trigger=annotation_data["trigger"],
                     participant_id=participant.id,
                     video_id=video.id
                 )
+
                 db.session.add(annotation)
 
         participant.has_submitted = True
         db.session.commit()
+        current_app.logger.debug("Database commit successful")
 
         current_app.logger.info(f"Annotations saved successfully for participant ID: {participant.id}")
     except Exception as e:
         db.session.rollback()
-        current_app.logger.error(f"Error saving annotations: {e}")
+        current_app.logger.error(f"Error saving annotations: {e}", exc_info=True)
         flash('There was an error saving your annotations. Please try again.', 'danger')
+
     finally:
         return redirect(url_for('core.index'))
         
@@ -179,27 +182,31 @@ def participant_annotations_to_json(participant):
         "participant_token": participant.token,
         "videos": []
     }
-       
+
     for video in participant.videos:
-        annotations = Annotation.query.filter_by(participant_id=participant.id, video_id=video.id).all()
-        annotations_data = [{
-            "timecode": annotation.timecode,
-            "frame_number": annotation.frame_number,
-            "slider_position": annotation.slider_position
-        } for annotation in annotations]
-        
         video_data = {
             "video_id": video.id,
             "duration": video.duration,
-            "frame_rate": video.frame_rate,
-            "annotations": annotations_data
+            "frame_rate": video.frame_rate
         }
+        annotations = Annotation.query.filter_by(participant_id=participant.id, video_id=video.id).all()
+        current_app.logger.debug(f"Retrieved annotations: {annotations}")
+
+        annotations_data = []
+        for annotation in annotations:
+            annotation_dict = {
+                "timecode": annotation.timecode,
+                "frame_number": annotation.frame_number,
+                "slider_position": annotation.slider_position,
+                "trigger": annotation.trigger
+            }
+            annotations_data.append(annotation_dict)
         
+        video_data["annotations"] = annotations_data
         participant_data["videos"].append(video_data)
-        current_app.logger.debug(f"Participant data before JSON serialization: {participant_data}")
 
+    current_app.logger.debug(f"Participant data before JSON serialization: {participant_data}")
     return participant_data
-
 
 def update_participant_progress(participant_id, progress_value):
     """
@@ -302,12 +309,13 @@ def save_video_to_disk(video, project_id, session_id):
     current_app.logger.debug(f"Video size on disk: {video_size} bytes")
     
     current_app.logger.info(f"Attempting to extract frame rate from {absolute_path_after}")
-    frame_rate = extract_frame_rate(absolute_path_after)
-    current_app.logger.info(f"Extracted frame rate: {frame_rate}")
+    frame_rate, duration = extract_video_properties(absolute_path_after)
+    current_app.logger.info(f"Extracted frame rate: {frame_rate}, Duration: {duration}")
 
     video_instance.filename = filename
     video_instance.filepath = VIDEO_FILE_PATH
     video_instance.frame_rate = frame_rate
+    video_instance.duration = duration
     db.session.add(video_instance)
     db.session.commit()
 

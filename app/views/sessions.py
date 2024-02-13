@@ -1,5 +1,7 @@
+import json
+
 from flask import (Blueprint, current_app, flash, jsonify, redirect,
-                   render_template, request, url_for)
+                   render_template, request, url_for, make_response)
 from flask_login import current_user, login_required
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -202,8 +204,9 @@ def download_participant_data(session_id, token):
 
     annotation_data = participant_annotations_to_json(participant_instance)
     
-    response = jsonify(annotation_data)
-    response.headers.set('Content-Disposition', 'attachment', filename=f'participant_{participant_instance.id}_annotations.json')
+    response = make_response(json.dumps(annotation_data, sort_keys=False))
+    response.headers.set('Content-Disposition', 'attachment', filename=f'participant-{participant_instance.id}_annotations.json')
+    response.mimetype = 'application/json'
     return response
 
 @sessions.route('/sessions/<int:session_id>/download/aggregate', methods=['GET'])
@@ -232,6 +235,7 @@ def download_aggregate_data(session_id):
         'Participants Data': participants_data
     }
     
-    response = jsonify(session_data)
-    response.headers.set('Content-Disposition', 'attachment', filename=f'session_{session_id}_aggregate.json')
+    response = make_response(json.dumps(session_data, sort_keys=False))
+    response.headers.set('Content-Disposition', 'attachment', filename=f'session-{session_id}_aggregate.json')
+    response.mimetype = 'application/json'
     return response
